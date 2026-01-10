@@ -1,0 +1,6 @@
+@Computrition.MenuService.API_HostAddress = http://localhost:5279
+
+GET {{Computrition.MenuService.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
