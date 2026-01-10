@@ -19,7 +19,6 @@ This repository is designed to be easy to explain in an interview: it demonstrat
 - Running Locally
 - Swagger (how to send X-Tenant-Id)
 - Tests
-- Common Pitfalls (EF tracking)
 - Notes / Improvements
 
 ---
@@ -234,8 +233,6 @@ Response:
 - `PUT /api/menu-items/{id}` → update menu item
 - `DELETE /api/menu-items/{id}` → delete menu item
 
-Tip: There is a ready-to-use HTTP scratch file at `Computrition.MenuService.API.http`.
-
 ---
 
 ## Data Access: EF Core vs Dapper (why both)
@@ -263,12 +260,6 @@ Recommended approach:
 1. Load the existing row (tracked)
 2. Copy values
 3. Save
-
-This avoids the common EF error:
-
-> The instance of entity type 'MenuItem' cannot be tracked because another instance with the same key value is already being tracked.
-
-Why it happens: you loaded a tracked entity, then tried to attach/update a second instance (often from the request body) with the same key.
 
 ### Example: Dapper is a good fit for filtered menu reads
 
@@ -350,9 +341,7 @@ How to use it:
 
 When you click **Authorize**, Swagger prompts you for the `X-Tenant-Id` value. After you enter a slug (for example `hospital-a`), Swagger will attach the header to every request you execute from the UI.
 
-Save the screenshot below as `docs/swagger-tenant-header.png` to render it in GitHub:
-
-![Swagger UI showing X-Tenant-Id authorization](docs/swagger-tenant-header.png)
+![Swagger UI showing X-Tenant-Id authorization]( swagger-tenant-header.png)
 
 Quick verification:
 
@@ -370,6 +359,7 @@ This repository includes both **unit tests** (service logic) and **integration-s
 ### Run tests
 
 ```bash
+# inside Computrition.MenuService.Tests
 dotnet test
 ```
 
@@ -402,20 +392,6 @@ These tests boot the API in-process using `WebApplicationFactory` and a shared i
 
 ---
 
-## Common Pitfalls (EF tracking)
-
-If you see this exception:
-
-> The instance of entity type 'MenuItem' cannot be tracked because another instance with the same key value ...
-
-It usually means:
-
-- You loaded an entity (tracked) using EF
-- Then you called `Update()` or `Attach()` using a second instance with the same `Id` (often the incoming request object)
-
-**Fix:** update the tracked instance instead of attaching a new one.
-
----
 
 ## Notes / Improvements
 
