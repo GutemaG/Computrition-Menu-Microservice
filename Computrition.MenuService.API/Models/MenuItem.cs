@@ -14,7 +14,8 @@ namespace Computrition.MenuService.API.Models
         public bool IsSugarFree {get; set;}
         public bool IsHeartHealthy {get; set;}
 
-
+        public int HospitalId { get; set; }
+        public virtual Hospital Hospital { get; set; } = default!;
 
     }
 }

@@ -33,7 +33,7 @@ namespace Computrition.MenuService.API.Repositories
         }
         public async Task<MenuItem?> GetMenuItemByIdAsync(int id)
         {
-            var menus = await _efContext.MenuItems.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id);
+            var menus = await _efContext.MenuItems.Include(x => x.Hospital).AsNoTracking().FirstOrDefaultAsync(item => item.Id == id);
             return menus;
         }
 
