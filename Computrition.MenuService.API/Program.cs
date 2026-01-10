@@ -2,6 +2,7 @@ using System.Data;
 using Computrition.MenuService.API.Data;
 using Computrition.MenuService.API.Repositories;
 using Computrition.MenuService.API.Services;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,10 +14,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite("Data Source=menu.db"));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Missing connection string 'ConnectionStrings:DefaultConnection' in appsettings.");
+}
+
+builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(connectionString));
 // Register Dapper Connection
 builder.Services.AddScoped<IDbConnection>(sp =>
-    new Microsoft.Data.Sqlite.SqliteConnection("Data Source=menu.db"));
+    new SqliteConnection(connectionString));
 
 
 // Register layers

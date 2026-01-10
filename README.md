@@ -17,7 +17,6 @@ This repository is designed to be easy to explain in an interview: it demonstrat
 - Data Access: EF Core vs Dapper (why both)
 - Running Locally
 - Tests
-- Common Pitfalls (EF tracking)
 - Notes / Improvements
 
 ---
@@ -273,6 +272,7 @@ This repository includes unit tests focusing on **service-level logic** (fast fe
 ### Run tests
 
 ```bash
+# inside Computrition.MenuService.Tests/
 dotnet test
 ```
 
@@ -290,23 +290,6 @@ dotnet test
 
 - Tests focus on business logic, not persistence
 - Keeps tests fast and deterministic
-
----
-
-## Common Pitfalls (EF tracking)
-
-If you see this exception:
-
-> The instance of entity type 'MenuItem' cannot be tracked because another instance with the same key value ...
-
-It usually means:
-
-- You loaded an entity (tracked) using EF
-- Then you called `Update()` or `Attach()` using a second instance with the same `Id` (often the incoming request object)
-
-**Fix:** update the tracked instance instead of attaching a new one.
-
----
 
 ## Notes / Improvements
 
