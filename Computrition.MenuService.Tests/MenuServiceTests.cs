@@ -21,18 +21,26 @@ public class MenuServiceTests
     [Fact]
     public async Task GetAllowedMenuForPatientAsync_WhenPatientIsGF_ReturnsOnlyGlutenFreeItems()
     {
+        int hospitalId = 1;
+        var hospital = new Hospital
+        {
+            Id = hospitalId,
+            Name = "Hospital-A",
+            Slug = "hospital-a"
+        };
         int patientId = 1;
         var patient = new Patient
         {
             Id = patientId,
             Name = "John Doe",
-            DietaryRestrictionCode = DietaryRestriction.GF
+            DietaryRestrictionCode = DietaryRestriction.GF,
+            HospitalId = hospitalId
         };
 
         var mockMenu = new List<MenuItem>
         {
-            new MenuItem { Id = 101, Name = "GF Bread", IsGlutenFree = true, IsSugarFree = false },
-            new MenuItem { Id = 102, Name = "Regular Pasta", IsGlutenFree = false, IsSugarFree = false }
+            new MenuItem { Id = 101, Name = "GF Bread", IsGlutenFree = true, IsSugarFree = false,HospitalId = hospitalId },
+            new MenuItem { Id = 102, Name = "Regular Pasta", IsGlutenFree = false, IsSugarFree = false,HospitalId = hospitalId }
         };
         _mockPatientRepo.Setup(r => r.GetPatientByIdAsync(patientId)).ReturnsAsync(patient);
         _mockMenuRepo.Setup(r => r.GetFilteredMenuItemsAsync(DietaryRestriction.GF))

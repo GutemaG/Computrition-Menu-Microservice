@@ -1,6 +1,7 @@
 using System.Data;
 using Computrition.MenuService.API.Data;
 using Computrition.MenuService.API.Models;
+using Computrition.MenuService.API.MultiTenancy;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,11 +11,13 @@ namespace Computrition.MenuService.API.Repositories
     {
         private readonly AppDbContext _efContext;
         private readonly IDbConnection _dapperConn;
+        private readonly ITenantContext _tenant;
 
-        public MenuRepository(AppDbContext efContext, IDbConnection dapperConn)
+        public MenuRepository(AppDbContext efContext, IDbConnection dapperConn, ITenantContext tenant)
         {
             _efContext = efContext;
             _dapperConn = dapperConn;
+            _tenant = tenant;
         }
 
         public async Task AddMenuItemAsync(MenuItem item)
@@ -25,11 +28,12 @@ namespace Computrition.MenuService.API.Repositories
      
         public async Task<IEnumerable<MenuItem>> GetFilteredMenuItemsAsync(DietaryRestriction restriction)
         {
-            string sql = "SELECT * FROM MenuItems WHERE 1=1";
-           if (restriction == DietaryRestriction.GF) sql += " AND IsGlutenFree = 1"; 
-           if (restriction == DietaryRestriction.SF) sql += " AND IsSugarFree = 1"; 
-           if (restriction == DietaryRestriction.HH) sql += " AND IsHeartHealthy = 1";
-            return await _dapperConn.QueryAsync<MenuItem>(sql);
+            string sql = "SELECT * FROM MenuItems WHERE HospitalId = @HospitalId";
+            if (restriction == DietaryRestriction.GF) sql += " AND IsGlutenFree = 1";
+            if (restriction == DietaryRestriction.SF) sql += " AND IsSugarFree = 1";
+            if (restriction == DietaryRestriction.HH) sql += " AND IsHeartHealthy = 1";
+
+            return await _dapperConn.QueryAsync<MenuItem>(sql, new { HospitalId = _tenant.HospitalId });
         }
         public async Task<MenuItem?> GetMenuItemByIdAsync(int id)
         {

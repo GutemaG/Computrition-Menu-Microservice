@@ -15,7 +15,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-       // Header-based "apiKey" security scheme (shows an Authorize button in Swagger UI)
+    // Header-based "apiKey" security scheme (shows an Authorize button in Swagger UI)
     c.AddSecurityDefinition("Tenant", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.ApiKey,
@@ -73,10 +73,12 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<AppDbContext>();
     // This creates the .db file if it doesn't exist
-    context.Database.EnsureCreated(); 
+    context.Database.EnsureCreated();
 }
 
-// add multi tenancy middleware
+app.UseRouting();
+
+// add multi tenancy middleware (must run after routing so SkipTenantHeader works)
 app.UseMiddleware<TenantHeaderMiddleware>();
 
 app.UseHttpsRedirection();
@@ -86,3 +88,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// This makes the implicitly defined 
+// public so test projects can reference it.
+public partial class Program { }
