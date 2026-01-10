@@ -7,13 +7,15 @@ namespace Computrition.MenuService.Tests;
 
 public class MenuServiceTests
 {
-    private readonly Mock<IMenuRepository> _mockRepo;
+    private readonly Mock<IMenuRepository> _mockMenuRepo;
+    private readonly Mock<IPatientRepository> _mockPatientRepo;
     private readonly MenuServiceClass _service;
 
     public MenuServiceTests()
     {
-        _mockRepo = new Mock<IMenuRepository>();
-        _service = new MenuServiceClass(_mockRepo.Object);
+        _mockMenuRepo = new Mock<IMenuRepository>();
+        _mockPatientRepo = new Mock<IPatientRepository>();
+        _service = new MenuServiceClass(_mockMenuRepo.Object, _mockPatientRepo.Object);
     }
     [Fact]
     public async Task CreateMenuItem_WhenValid_CallsRepoOnce()
@@ -25,7 +27,7 @@ public class MenuServiceTests
         await _service.CreateMenuItemAsync(item);
 
         // Assert
-        _mockRepo.Verify(r => r.AddMenuItemAsync(It.IsAny<MenuItem>()), Times.Once);
+        _mockMenuRepo.Verify(r => r.AddMenuItemAsync(It.IsAny<MenuItem>()), Times.Once);
     }
     [Fact]
     public async Task CreateMenuItem_WhenNameIsEmpty_ThrowsArgumentException()
