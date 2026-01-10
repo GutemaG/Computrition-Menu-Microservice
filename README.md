@@ -11,11 +11,13 @@ This repository is designed to be easy to explain in an interview: it demonstrat
 - Overview
 - Tech Stack
 - Architecture (How requests flow)
+- Multi-tenancy (Hospital tenants)
 - Folder Structure
 - Domain Model
 - API Endpoints (examples)
 - Data Access: EF Core vs Dapper (why both)
 - Running Locally
+- Swagger (how to send X-Tenant-Id)
 - Tests
 - Common Pitfalls (EF tracking)
 - Notes / Improvements
@@ -71,6 +73,43 @@ This structure makes the service easier to test: the service layer can be unit t
 
 ---
 
+## Multi-tenancy (Hospital tenants)
+
+This service supports a simple **header-based** multi-tenancy model where the tenant is a **Hospital**.
+
+### How the tenant is selected
+
+- Every tenant-scoped request must include the header `X-Tenant-Id` with the **hospital slug** (example: `hospital-a`, `hospital-b`).
+- The tenant header is enforced by middleware: [Computrition.MenuService.API/MultiTenancy/TenantHeaderMiddleware.cs](Computrition.MenuService.API/MultiTenancy/TenantHeaderMiddleware.cs)
+- The middleware resolves the slug to a real `Hospital.Id` using the `Hospitals` table and stores it in a scoped tenant context: [Computrition.MenuService.API/MultiTenancy/ITenantContext.cs](Computrition.MenuService.API/MultiTenancy/ITenantContext.cs) and [Computrition.MenuService.API/MultiTenancy/TenantContext.cs](Computrition.MenuService.API/MultiTenancy/TenantContext.cs)
+
+### Endpoints that do NOT require the header
+
+Hospital endpoints are intentionally public (so you can create/list hospitals without already belonging to one). These endpoints are annotated with:
+
+- `[SkipTenantHeader]` in [Computrition.MenuService.API/Controllers/HospitalController.cs](Computrition.MenuService.API/Controllers/HospitalController.cs)
+
+The attribute definition is:
+
+- [Computrition.MenuService.API/MultiTenancy/SkipTenantHeaderAttribute.cs](Computrition.MenuService.API/MultiTenancy/SkipTenantHeaderAttribute.cs)
+
+### Data isolation (Tenant A cannot see Tenant B)
+
+Tenant isolation is enforced in two places:
+
+1. **EF Core**: global query filters on `Patient` and `MenuItem` by `HospitalId` (see [Computrition.MenuService.API/Data/AppDbContext.cs](Computrition.MenuService.API/Data/AppDbContext.cs)). This makes EF queries automatically tenant-scoped.
+2. **Dapper**: all tenant-scoped SQL queries include `WHERE HospitalId = @HospitalId` (see [Computrition.MenuService.API/Repositories/PatientRepository.cs](Computrition.MenuService.API/Repositories/PatientRepository.cs) and [Computrition.MenuService.API/Repositories/MenuRepository.cs](Computrition.MenuService.API/Repositories/MenuRepository.cs)).
+
+### Slug generation
+
+`Hospital.Slug` is generated from `Hospital.Name` using [Computrition.MenuService.API/Utility/Slugify.cs](Computrition.MenuService.API/Utility/Slugify.cs).
+
+The slugification rule is applied automatically by overriding `SaveChanges` / `SaveChangesAsync` in the EF Core context:
+
+- [Computrition.MenuService.API/Data/AppDbContext.cs](Computrition.MenuService.API/Data/AppDbContext.cs)
+
+---
+
 ## Folder Structure
 
 ```text
@@ -83,28 +122,42 @@ This structure makes the service easier to test: the service layer can be unit t
 │   ├── appsettings.json
 │   ├── appsettings.Development.json
 │   ├── Controllers
+│   │   ├── HospitalController.cs
 │   │   ├── MenuItemsController.cs
 │   │   └── PatientsController.cs
 │   ├── Data
 │   │   └── AppDbContext.cs
 │   ├── Models
 │   │   ├── DietaryRestriction.cs
+│   │   ├── Hospital.cs
 │   │   ├── MenuItem.cs
 │   │   └── Patient.cs
+│   ├── MultiTenancy
+│   │   ├── ITenantContext.cs
+│   │   ├── SkipTenantHeaderAttribute.cs
+│   │   ├── TenantContext.cs
+│   │   └── TenantHeaderMiddleware.cs
 │   ├── Repositories
+│   │   ├── IHospitalRepository.cs
 │   │   ├── IMenuRepository.cs
 │   │   ├── IPatientRepository.cs
+│   │   ├── HospitalRepository.cs
 │   │   ├── MenuRepository.cs
 │   │   └── PatientRepository.cs
 │   └── Services
+│       ├── HospitalService.cs
+│       ├── IHospitalService.cs
 │       ├── IMenuService.cs
 │       ├── IPatientService.cs
 │       ├── MenuService.cs
 │       └── PatientService.cs
 └── Computrition.MenuService.Tests
-		├── Computrition.MenuService.Tests.csproj
-		├── MenuServiceTests.cs
-		└── PatientServiceTests.cs
+    ├── Computrition.MenuService.Tests.csproj
+    ├── MenuServiceTests.cs
+    ├── MultiTenancyControllerTests.cs
+    ├── PatientServiceTests.cs
+    └── TestInfrastructure
+	└── TestWebApplicationFactory.cs
 ```
 
 ### What each area is responsible for
@@ -120,17 +173,32 @@ This structure makes the service easier to test: the service layer can be unit t
 
 ## Domain Model (at a glance)
 
+This service uses **Hospital** as the tenant boundary:
+
+- `Patient.HospitalId` is a foreign key to `Hospital.Id`
+- `MenuItem.HospitalId` is a foreign key to `Hospital.Id`
+
+These relationships are enforced in EF Core and used to ensure data isolation per tenant.
+
+### `Hospital`
+
+- `Id`
+- `Name`
+- `Slug` (used as the value of the `X-Tenant-Id` header)
+
 ### `Patient`
 
 - `Id`
 - `Name`
 - `DietaryRestrictionCode` (enum)
+- `HospitalId` (FK → `Hospital.Id`)
 
 ### `MenuItem`
 
 - `Id`
 - `Name`
 - flags like `IsGlutenFree`, `IsSugarFree`, etc.
+- `HospitalId` (FK → `Hospital.Id`)
 
 ### `DietaryRestriction` (enum)
 
@@ -222,12 +290,12 @@ In this codebase, this is implemented with Dapper in:
 Concrete example from `MenuRepository.GetFilteredMenuItemsAsync` (dynamic SQL based on the restriction code):
 
 ```csharp
-string sql = "SELECT * FROM MenuItems WHERE 1=1";
+string sql = "SELECT * FROM MenuItems WHERE HospitalId = @HospitalId";
 if (restriction == DietaryRestriction.GF) sql += " AND IsGlutenFree = 1";
 if (restriction == DietaryRestriction.SF) sql += " AND IsSugarFree = 1";
 if (restriction == DietaryRestriction.HH) sql += " AND IsHeartHealthy = 1";
 
-return await _dapperConn.QueryAsync<MenuItem>(sql);
+return await _dapperConn.QueryAsync<MenuItem>(sql, new { HospitalId = _tenant.HospitalId });
 ```
 
 **Rule of thumb used here:**
@@ -266,9 +334,38 @@ Then open Swagger (if enabled) or use the included HTTP file:
 
 ---
 
+## Swagger (how to send X-Tenant-Id)
+
+Swagger is configured in [Computrition.MenuService.API/Program.cs](Computrition.MenuService.API/Program.cs) with an API-key style header named `X-Tenant-Id`.
+
+How to use it:
+
+1. Run the API.
+2. Open Swagger UI.
+3. Click **Authorize**.
+4. Enter a hospital slug (for seeded tenants: `hospital-a` or `hospital-b`).
+5. Execute any tenant-scoped endpoint (patients/menu items). The header will be sent automatically.
+
+### Swagger UI example (Authorize modal)
+
+When you click **Authorize**, Swagger prompts you for the `X-Tenant-Id` value. After you enter a slug (for example `hospital-a`), Swagger will attach the header to every request you execute from the UI.
+
+Save the screenshot below as `docs/swagger-tenant-header.png` to render it in GitHub:
+
+![Swagger UI showing X-Tenant-Id authorization](docs/swagger-tenant-header.png)
+
+Quick verification:
+
+- Set `X-Tenant-Id = hospital-a` and call `GET /api/patients` → all returned rows have `hospitalId = 1`
+- Set `X-Tenant-Id = hospital-b` and call `GET /api/patients` → all returned rows have `hospitalId = 2`
+
+Hospital endpoints under `/api/hospital` do not require the header because they are annotated with `[SkipTenantHeader]`.
+
+---
+
 ## Tests
 
-This repository includes unit tests focusing on **service-level logic** (fast feedback, no database).
+This repository includes both **unit tests** (service logic) and **integration-style tests** for multi-tenancy.
 
 ### Run tests
 
@@ -285,6 +382,18 @@ dotnet test
 
 - `PatientServiceTests.cs`
 	- Patient CRUD behaviors (via mocked repository)
+
+- `MultiTenancyControllerTests.cs`
+	- Missing `X-Tenant-Id` returns `400`
+	- Unknown tenant slug returns `401`
+	- Tenant A only sees rows where `HospitalId = 1`
+	- Tenant B only sees rows where `HospitalId = 2`
+	- Tenant A cannot fetch Tenant B’s patient by id (returns `404`)
+	- Hospital endpoints are accessible without the tenant header (`[SkipTenantHeader]`)
+
+These tests boot the API in-process using `WebApplicationFactory` and a shared in-memory SQLite database:
+
+- [Computrition.MenuService.Tests/TestInfrastructure/TestWebApplicationFactory.cs](Computrition.MenuService.Tests/TestInfrastructure/TestWebApplicationFactory.cs)
 
 ### Why mock repositories?
 
@@ -316,4 +425,4 @@ If expanding this into a production-ready microservice, the next steps would be:
 - Add global exception handling middleware + consistent error responses
 - Add migrations and environment-specific DB configuration
 - Add observability (structured logging, tracing, metrics)
-- Add Multi-tenancy support
+- Consider DB-level enforcement (Row-Level Security) if moving beyond SQLite
