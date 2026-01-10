@@ -42,6 +42,11 @@ namespace Computrition.MenuService.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreatePatient([FromBody] Patient patient)
         {
+            if (string.IsNullOrWhiteSpace(patient.Name))
+            {
+                throw new ArgumentException("Name is required.");
+            }
+
             await _patientService.CreatePatientAsync(patient);
             return CreatedAtAction(nameof(CreatePatient), new { id = patient.Id });
         }
