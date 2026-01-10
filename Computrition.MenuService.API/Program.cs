@@ -1,7 +1,7 @@
 using System.Data;
-using Computrition.MenuMicroService.Data;
-using Computrition.MenuMicroService.Repositories;
-using Computrition.MenuMicroService.Services;
+using Computrition.MenuService.API.Data;
+using Computrition.MenuService.API.Repositories;
+using Computrition.MenuService.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

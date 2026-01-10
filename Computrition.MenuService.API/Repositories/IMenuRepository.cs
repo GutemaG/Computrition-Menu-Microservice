@@ -1,6 +1,6 @@
-using Computrition.MenuMicroService.Models;
+using Computrition.MenuService.API.Models;
 
-namespace Computrition.MenuMicroService.Repositories
+namespace Computrition.MenuService.API.Repositories
 {
     public interface IMenuRepository
     {

@@ -1,9 +1,9 @@
 
-using Computrition.MenuMicroService.Models;
-using Computrition.MenuMicroService.Services;
+using Computrition.MenuService.API.Models;
+using Computrition.MenuService.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Computrition.MenuMicroService.Controllers
+namespace Computrition.MenuService.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

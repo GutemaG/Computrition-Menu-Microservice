@@ -1,7 +1,7 @@
-using Computrition.MenuMicroService.Models;
+using Computrition.MenuService.API.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Computrition.MenuMicroService.Data
+namespace Computrition.MenuService.API.Data
 {
     public class AppDbContext : DbContext
     {

@@ -1,7 +1,7 @@
-using Computrition.MenuMicroService.Models;
-using Computrition.MenuMicroService.Repositories;
+using Computrition.MenuService.API.Models;
+using Computrition.MenuService.API.Repositories;
 
-namespace Computrition.MenuMicroService.Services
+namespace Computrition.MenuService.API.Services
 {
     public class MenuService:IMenuService
     {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Computrition.MenuMicroService.Models
+namespace Computrition.MenuService.API.Models
 {
     public class MenuItem
     {

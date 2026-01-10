@@ -1,4 +1,4 @@
-namespace Computrition.MenuMicroService.Models
+namespace Computrition.MenuService.API.Models
 {
     public enum DietaryRestriction
     {

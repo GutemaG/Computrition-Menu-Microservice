@@ -1,9 +1,9 @@
 using System.Data;
-using Computrition.MenuMicroService.Data;
-using Computrition.MenuMicroService.Models;
+using Computrition.MenuService.API.Data;
+using Computrition.MenuService.API.Models;
 using Dapper;
 
-namespace Computrition.MenuMicroService.Repositories
+namespace Computrition.MenuService.API.Repositories
 {
     public class MenuRepository: IMenuRepository
     {
