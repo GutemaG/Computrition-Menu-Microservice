@@ -297,6 +297,8 @@ If expanding this into a production-ready microservice, the next steps would be:
 
 - Add DTOs and validation (FluentValidation) instead of using entity types directly in controllers
 - Add global exception handling middleware + consistent error responses
+- Add custom response models (avoid returning entities directly)
+- Add Pagination for list endpoints
 - Add migrations and environment-specific DB configuration
 - Add observability (structured logging, tracing, metrics)
 - Add Multi-tenancy support
