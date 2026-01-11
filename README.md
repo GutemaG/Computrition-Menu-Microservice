@@ -1,4 +1,11 @@
-# Computrition-Menu-Microservice
+# Computrition Menu Microservice
+
+## ⚠️ IMPORTANT BRANCH NOTE
+
+**This branch (`main`) does NOT include multi-tenancy architecture.**
+**For the multi-tenancy implementation, please switch to the [multi-tenancy](../tree/multi-tenancy) branch.**
+
+##
 
 .NET 8 ASP.NET Core Web API microservice for managing **patients**, **menu items**, and computing a patient’s **allowed menu** based on dietary restrictions.
 
