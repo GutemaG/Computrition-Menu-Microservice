@@ -1,4 +1,5 @@
 
+using Computrition.MenuService.API.Dtos;
 using Computrition.MenuService.API.Models;
 using Computrition.MenuService.API.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,10 +17,19 @@ namespace Computrition.MenuService.API.Controllers
         }
 
         [HttpPost("/api/menu-item/")]
-        public async Task<IActionResult> CreateMenuItem([FromBody] MenuItem item)
+        public async Task<IActionResult> CreateMenuItem([FromBody] CreateMenuItemDto item)
         {
-            await _menuService.CreateMenuItemAsync(item);
-            return CreatedAtAction(nameof(CreateMenuItem), new { id = item.Id }, item);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var newItem = new MenuItem
+            {
+                Name = item.Name,
+                Category = item.Category,
+                IsGlutenFree = item.IsGlutenFree,
+                IsHeartHealthy = item.IsHeartHealthy,
+                IsSugarFree = item.IsSugarFree
+            };
+            await _menuService.CreateMenuItemAsync(newItem);
+            return CreatedAtAction(nameof(CreateMenuItem), new { id = newItem.Id }, item);
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMenuItemById(int id)

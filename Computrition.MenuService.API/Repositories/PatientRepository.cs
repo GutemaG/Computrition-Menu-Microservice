@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Data;
 using Computrition.MenuService.API.Data;
 using Computrition.MenuService.API.Models;
@@ -20,12 +21,27 @@ namespace Computrition.MenuService.API.Repositories
         }
         public async Task<Patient?> GetPatientByIdAsync(int id)
         {
-            return await _dapperConn.QueryFirstOrDefaultAsync<Patient>(
-                "SELECT * FROM Patients WHERE Id = @Id AND HospitalId = @HospitalId",
-                new { Id = id, HospitalId = _tenant.HospitalId });
+            // To show how dapper include the other object
+
+            var sql = @"SELECT p.*,h.* FROM patients p
+                    JOIN Hospitals h ON p.HospitalId = h.Id 
+                    WHERE p.Id = @Id AND p.HospitalId = @HospitalId";
+            // Patient(input type 1), Hospital(input type 2) and Patient(return type)
+            var patients =  await _dapperConn.QueryAsync<Patient,Hospital, Patient>(
+                sql,
+                (patient, hospital) =>
+                {
+                    patient.Hospital = hospital;
+                    return patient;
+                },
+                new { Id = id, HospitalId = _tenant.HospitalId },
+                splitOn: "Id" //'splitOn' tells Dapper where the Hospital columns begin (usually the 'Id' of the second table)
+            );
+            return patients.FirstOrDefault();
         }
         public async Task CreateAsync(Patient patient)
         {
+            patient.HospitalId = _tenant.HospitalId;
             _efContext.Patients.Add(patient);
             await _efContext.SaveChangesAsync();
         }

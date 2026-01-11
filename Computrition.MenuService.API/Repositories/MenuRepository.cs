@@ -22,6 +22,7 @@ namespace Computrition.MenuService.API.Repositories
 
         public async Task AddMenuItemAsync(MenuItem item)
         {
+            item.HospitalId = _tenant.HospitalId;
             _efContext.MenuItems.Add(item);
             await _efContext.SaveChangesAsync(); 
         }

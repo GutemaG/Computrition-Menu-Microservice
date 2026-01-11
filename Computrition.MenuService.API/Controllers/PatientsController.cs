@@ -1,3 +1,4 @@
+using Computrition.MenuService.API.Dtos;
 using Computrition.MenuService.API.Models;
 using Computrition.MenuService.API.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -40,15 +41,20 @@ namespace Computrition.MenuService.API.Controllers
             return Ok(patient);
         }
         [HttpPost]
-        public async Task<IActionResult> CreatePatient([FromBody] Patient patient)
+        public async Task<IActionResult> CreatePatient([FromBody] CreatePatientDto patient)
         {
             if (string.IsNullOrWhiteSpace(patient.Name))
             {
                 throw new ArgumentException("Name is required.");
             }
+            var newPatient = new Patient
+            {
+                Name = patient.Name,
+                DietaryRestrictionCode = patient.DietaryRestrictionCode
+            };
 
-            await _patientService.CreatePatientAsync(patient);
-            return CreatedAtAction(nameof(CreatePatient), new { id = patient.Id });
+            await _patientService.CreatePatientAsync(newPatient);
+            return CreatedAtAction(nameof(CreatePatient), new { id = newPatient.Id },newPatient);
         }
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Patient patient)
