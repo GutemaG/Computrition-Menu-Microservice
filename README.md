@@ -1,4 +1,4 @@
-# Computrition-Menu-Microservice
+# Computrition Menu Microservice Multi Tenancy
 
 .NET 8 ASP.NET Core Web API microservice for managing **patients**, **menu items**, and computing a patient’s **allowed menu** based on dietary restrictions.
 
