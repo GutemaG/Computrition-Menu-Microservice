@@ -3,7 +3,7 @@
 ## ⚠️ IMPORTANT BRANCH NOTE
 
 **This branch (`main`) does NOT include multi-tenancy architecture.**
-**For the multi-tenancy implementation, please switch to the [multi-tenancy](../tree/multi-tenancy) branch.**
+**For the multi-tenancy implementation, please switch to the [multi-tenancy](https://github.com/GutemaG/Computrition-Menu-Microservice/tree/multi-tenancy) branch.**
 
 ##
 
